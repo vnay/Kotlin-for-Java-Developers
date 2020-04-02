@@ -1,6 +1,88 @@
 package rationals
 
+import java.math.BigInteger
 
+infix fun Int.divBy(r: Int): Rational =
+        Rational(toBigInteger(), r.toBigInteger())
+
+infix fun Long.divBy(r: Long): Rational =
+        Rational(toBigInteger(), r.toBigInteger())
+
+infix fun BigInteger.divBy(r: BigInteger): Rational =
+        Rational(this, r)
+
+fun String.toRational(): Rational {
+    val number = split("/")
+    return when {
+        number.size == 1 -> Rational(number[0].toBigInteger(), 1.toBigInteger())
+        else -> Rational(number[0].toBigInteger(), number[1].toBigInteger())
+    }
+}
+
+fun hcf(n1: BigInteger, n2: BigInteger): BigInteger =
+        if(n2 != 0.toBigInteger()) hcf(n2, n1 % n2) else n1
+
+fun simplify(r: Rational): Rational {
+    val hcf = hcf(r.n, r.d).abs()
+    return Rational(r.n.div(hcf), r.d.div(hcf))
+}
+
+fun formatRational(r: Rational): String =
+        r.n.toString() + "/" + r.d.toString()
+
+class Rational(val n: BigInteger, val d: BigInteger) : Comparable<Rational> {
+
+    operator fun plus(r: Rational): Rational =
+            (n.times(r.d).plus(r.n.times(d))).divBy(r.d.times(d))
+
+    operator fun minus(r: Rational): Rational =
+            (n.times(r.d).minus(r.n.times(d))).divBy(r.d.times(d))
+
+    operator fun times(r: Rational): Rational =
+            (n.times(r.n)).divBy(r.d.times(d))
+
+    operator fun div(r: Rational): Rational =
+            (n.times(r.d)).divBy(d.times(r.n))
+
+    operator fun unaryMinus(): Rational =
+            Rational(n.negate(), d)
+
+    override fun compareTo(other: Rational): Int =
+        n.times(other.d).compareTo(other.n.times(d))
+
+    override fun equals(other: Any?): Boolean {
+        if(this === other) return true
+
+        other as Rational
+
+        val thisN = simplify(this)
+        val otherN = simplify(other)
+
+        return (thisN.n.toDouble().div(thisN.d.toDouble())) == (otherN.n.toDouble().div(otherN.d.toDouble()))
+    }
+
+    override fun toString(): String {
+        return when {
+            (d == 1.toBigInteger() || n.rem(d) == 0.toBigInteger()) -> n.div(d).toString()
+            else -> {
+                val r = simplify(this)
+
+                if(r.d < 0.toBigInteger() || (r.n < 0.toBigInteger() && r.d < 0.toBigInteger())) {
+                    formatRational(Rational(r.n.negate(), r.d.negate()))
+                }
+                else {
+                    formatRational(Rational(r.n, r.d))
+                }
+            }
+        }
+    }
+
+    override fun hashCode(): Int {
+        var result = n.hashCode()
+        result = 31 * result + d.hashCode()
+        return result
+    }
+}
 
 fun main() {
     val half = 1 divBy 2
